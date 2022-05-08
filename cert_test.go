@@ -17,12 +17,12 @@ func TestGenerateRootPair(t *testing.T) {
 		t.Error(err)
 	}
 
-	c.SaveRootPair("cert/ca.cert.pem", "cert/ca.key.pem")
+	c.SaveRootPair("cert/root.cert.pem", "cert/root.key.pem")
 }
 
 func TestGenerateInterPair(t *testing.T) {
 	c := NewCertChain()
-	c.LoadRootPair("cert/ca.cert.pem", "cert/ca.key.pem")
+	c.LoadRootPair("cert/root.cert.pem", "cert/root.key.pem")
 	root := c.GetRootPair()
 	inter := c.GetInterPair()
 
@@ -36,7 +36,7 @@ func TestGenerateInterPair(t *testing.T) {
 
 func TestGenerateServerpair(t *testing.T) {
 	c := NewCertChain()
-	c.LoadRootPair("cert/ca.cert.pem", "cert/ca.key.pem")
+	c.LoadRootPair("cert/root.cert.pem", "cert/root.key.pem")
 	c.LoadInterPair("cert/inter.cert.pem", "cert/inter.key.pem")
 	root := c.GetRootPair()
 	inter := c.GetInterPair()

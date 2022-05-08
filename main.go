@@ -3,19 +3,65 @@ package main
 import (
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/valyala/fasthttp"
 )
 
 var cc *CertChain = NewCertChain()
+var stcs []*SecurityTrustCert = []*SecurityTrustCert{}
 
 func init() {
-	cc.LoadRootPair("cert/ca.cert.pem", "cert/ca.key.pem")
-	cc.LoadInterPair("cert/inter.cert.pem", "cert/inter.key.pem")
+	_ = cc.LoadRootPair("cert/root.cert.pem", "cert/root.key.pem")
+	_ = cc.LoadInterPair("cert/inter.cert.pem", "cert/inter.key.pem")
+	root := cc.GetRootPair()
+	inter := cc.GetInterPair()
+
+	err := root.Save("cert/root.cert.pem", "cert/root.key.pem")
+	if err != nil {
+		panic(err)
+	}
+	err = inter.Save("cert/inter.cert.pem", "cert/inter.key.pem")
+	if err != nil {
+		panic(err)
+	}
+
+	rootCertFile, _ := filepath.Abs("./cert/root.cert.pem")
+	interCertFile, _ := filepath.Abs("./cert/inter.cert.pem")
+	rc := NewSecurityTrustCert()
+	ic := NewSecurityTrustCert()
+
+	err = rc.AddTrustedCert(rootCertFile)
+	if err != nil {
+		panic(err)
+	}
+	stcs = append(stcs, rc)
+
+	err = ic.AddTrustedCert(interCertFile)
+	if err != nil {
+		log.Println(err)
+	}
+	stcs = append(stcs, ic)
+
+	setSystemProxy()
 }
 
 func main() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		unsetSystemProxy()
+		for _, s := range stcs {
+			s.RemoveTrustedCert()
+		}
+		os.Exit(1)
+	}()
+
 	ln, err := net.Listen("tcp", ":6789")
 	if err != nil {
 		log.Fatalln(err)
