@@ -57,29 +57,31 @@ var XPS = []byte("X-Proxy-Server")
 func ProxyServe(conn net.Conn) (err error) {
 	log.Printf("Serve TLS Conn")
 
-	err = fasthttp.ServeConn(tls.Server(conn, tlsConfig), func(ctx *fasthttp.RequestCtx) {
-		log.Printf("Proxy Request: %s %s %s %s\n", ctx.URI().Scheme(), ctx.Method(), ctx.Host(), ctx.Path())
-
-		req := &ctx.Request
-		resp := &ctx.Response
-
-		proxyResp := fasthttp.AcquireResponse()
-
-		if err := proxyClient.Do(req, proxyResp); err != nil {
-			log.Printf("Client request err %s", err)
-			return
-		}
-
-		log.Printf("Proxy Request Success: %s %d %s\n", req.Host(), proxyResp.StatusCode(), proxyResp.Header.ContentType())
-
-		proxyResp.CopyTo(resp)
-		resp.Header.SetBytesK(XPS, "Jedi/0.1")
-		fasthttp.ReleaseResponse(proxyResp)
-	})
+	err = fasthttp.ServeConn(tls.Server(conn, tlsConfig), handleProxy)
 
 	if err != nil {
 		log.Printf("Serve TLS Conn err %s", err)
 	}
 
 	return
+}
+
+func handleProxy(ctx *fasthttp.RequestCtx) {
+	log.Printf("Proxy Request: %s %s %s %s\n", ctx.URI().Scheme(), ctx.Method(), ctx.Host(), ctx.Path())
+
+	req := &ctx.Request
+	resp := &ctx.Response
+
+	proxyResp := fasthttp.AcquireResponse()
+
+	if err := proxyClient.Do(req, proxyResp); err != nil {
+		log.Printf("Client request err %s", err)
+		return
+	}
+
+	log.Printf("Proxy Request Success: %s %d %s\n", req.Host(), proxyResp.StatusCode(), proxyResp.Header.ContentType())
+
+	proxyResp.CopyTo(resp)
+	resp.Header.SetBytesK(XPS, "Jedi/0.1")
+	fasthttp.ReleaseResponse(proxyResp)
 }

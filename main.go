@@ -80,13 +80,19 @@ func main() {
 }
 
 func connectHandler(ctx *fasthttp.RequestCtx) {
-	log.Printf("Connect Handle: %s %s %s %s\n", ctx.URI().Scheme(), ctx.Method(), ctx.Host(), ctx.Path())
 	if ctx.IsConnect() {
+		log.Printf("Connect Handle: %s %s %s %s\n", ctx.URI().Scheme(), ctx.Method(), ctx.Host(), ctx.Path())
 		log.Printf("Connection Established：%s\n", ctx.Host())
 		handleConnect(ctx)
 		return
 	}
 
-	ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
-	ctx.SetBodyString("This is a http tunnel proxy, only CONNECT method is allowed.")
+	log.Printf("Direct Handle: %s %s %s %s\n", ctx.URI().Scheme(), ctx.Method(), ctx.Host(), ctx.Path())
+
+	if string(ctx.Host()) == "127.0.0.1:6789" {
+		ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
+		ctx.SetBodyString("This is a http tunnel proxy, only CONNECT method is allowed.")
+	}
+
+	handleProxy(ctx)
 }
