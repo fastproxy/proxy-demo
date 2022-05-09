@@ -20,9 +20,12 @@ var tlsConfig = &tls.Config{
 	InsecureSkipVerify: true,
 	GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domain := info.ServerName
-		if strings.Count(domain, ".") == 0 {
+		dotCount := strings.Count(domain, ".")
+		if dotCount == 0 {
 			return nil, fmt.Errorf("invalid domain %s", domain)
-		} else if strings.Count(domain, ".") > 1 {
+		}
+
+		if dotCount > 1 {
 			domain = domainRe.ReplaceAllString(info.ServerName, "*.${2}")
 		}
 
