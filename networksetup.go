@@ -1,4 +1,4 @@
-// inspire to https://github.com/fanpei91/sandwich-system-proxy/blob/master/sysproxy_darwin.go
+// inspire by https://github.com/fanpei91/sandwich-system-proxy/blob/master/sysproxy_darwin.go
 package main
 
 import (
