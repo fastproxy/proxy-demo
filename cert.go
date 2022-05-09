@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -138,13 +139,12 @@ func (cc *CertChain) SaveInterPair(certFile, keyFile string) error {
 
 // 生成证书，包括根证书、中间证书和域名证书
 func (cc *CertChain) generatePair(certType CertType, name string) (*Certificate, error) {
-	cc.mapMu.Lock()
 	if cc.certMap[name] != nil {
+		cc.mapMu.Lock()
 		cert := cc.certMap[name]
 		cc.mapMu.Unlock()
 		return cert, nil
 	}
-	cc.mapMu.Unlock()
 
 	key := GeneratePrivateKey()
 
@@ -179,6 +179,8 @@ func (cc *CertChain) generatePair(certType CertType, name string) (*Certificate,
 	if certType == CertTypeServer {
 		csr.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 		csr.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth} // 服务端认证
+		// make certificate valid over localhost.
+		csr.IPAddresses = []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback}
 	}
 
 	var parentCert *Certificate
