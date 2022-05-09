@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/reuseport"
 )
 
 var cc *CertChain = NewCertChain()
@@ -62,7 +62,7 @@ func main() {
 		os.Exit(1)
 	}()
 
-	ln, err := net.Listen("tcp", ":6789")
+	ln, err := reuseport.Listen("tcp4", ":6789")
 	if err != nil {
 		log.Fatalln(err)
 	}

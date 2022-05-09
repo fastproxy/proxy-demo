@@ -71,7 +71,7 @@ func ProxyServe(conn net.Conn) (err error) {
 
 		proxyResp.CopyTo(resp)
 		resp.Header.SetBytesK(XPS, "Jedi/0.1")
-
+		fasthttp.ReleaseResponse(proxyResp)
 	})
 
 	if err != nil {
